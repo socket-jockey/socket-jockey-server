@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 8000;
+const { instrument } = require('@socket.io/admin-ui');
 
 app.use(require('cors')({
   origin: true,
@@ -11,17 +12,43 @@ const http = require('http').createServer(app);
 
 const io = require('socket.io')(http, {
   cors: {
-    origin: true,
+    origin: ['https://admin.socket.io', 'http://localhost:7891', 'https://socketjockey-dev.netlify.app/', 'https://socketjockey.netlify.app/'],
+    credentials: true,
   }
 });
 
+const namespace = io.of('/')
 app.use(express.json());
 
-io.on('connection', socket => {
+// const rooms = io.sockets.adapter.rooms
+let num = 10001;
 
+io.on('connection', socket => {
   console.log(`new connection id ${socket.id}`);
 
 
+  socket.on('collab', () => {
+    const room = 'room' + num;
+    socket.join(room)
+    const numOfParticipants = Array.from(namespace.adapter.rooms.get(room)).length
+    if(numOfParticipants >= 3)num++
+
+    socket.emit('set room', room);
+    // console.log(io.of('/').in(room))
+    console.log(namespace.adapter.rooms)
+  })
+
+  socket.on('client chat', (input, socketRoom) => {
+    console.log('room', socketRoom)
+    console.log(input)
+    io.in(socketRoom).emit('server chat', input)
+  })
+
+
+});
+
+instrument(io, {
+  auth: false
 });
 
 http.listen(PORT, () => console.log(`server spinning on port ${PORT}`));
