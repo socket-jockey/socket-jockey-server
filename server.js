@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 8000;
 const { instrument } = require('@socket.io/admin-ui');
-
+//testing 
 app.use(require('cors')({
   origin: true,
   credentials: true,
@@ -46,7 +46,7 @@ io.on('connection', socket => {
 
   socket.on('add object', (socketRoom, data) => {
     console.log(socketRoom, data);
-    io.in(socketRoom).emit('emit add object', { x: data.x, y: data.y });
+    io.in(socketRoom).emit('emit add object', data);
   });
 
 
