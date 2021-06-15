@@ -12,8 +12,7 @@ const http = require('http').createServer(app);
 
 const io = require('socket.io')(http, {
   cors: {
-    origin: ['https://admin.socket.io', 'http://localhost:7891', 'https://socketjockey-dev.netlify.app/', 'https://socketjockey.netlify.app/'],
-    credentials: true,
+    origin: true
   }
 });
 
