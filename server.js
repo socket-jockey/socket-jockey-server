@@ -32,9 +32,13 @@ io.on('connection', socket => {
     const numOfParticipants = Array.from(namespace.adapter.rooms.get(room)).length;
     if(numOfParticipants >= 3)num++;
 
-    socket.emit('set room', room, numOfParticipants);
+    socket.emit('set room', room);
+    io.in(room).emit('num participants', numOfParticipants);
     // console.log(io.of('/').in(room))
     console.log(namespace.adapter.rooms);
+  });
+  socket.on('begin', (room) => {
+    io.in(room).emit('close modal');
   });
 
   socket.on('client chat', (input, socketRoom) => {
