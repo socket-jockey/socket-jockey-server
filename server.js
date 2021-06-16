@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 8000;
 const { instrument } = require('@socket.io/admin-ui');
-
+//testing 
 app.use(require('cors')({
   origin: true,
   credentials: true,
@@ -12,8 +12,7 @@ const http = require('http').createServer(app);
 
 const io = require('socket.io')(http, {
   cors: {
-    origin: ['https://admin.socket.io', 'http://localhost:7891', 'https://socketjockey-dev.netlify.app/', 'https://socketjockey.netlify.app/'],
-    credentials: true,
+    origin: true
   }
 });
 
@@ -46,7 +45,7 @@ io.on('connection', socket => {
 
   socket.on('add object', (socketRoom, data) => {
     console.log(socketRoom, data);
-    io.in(socketRoom).emit('emit add object', { x: data.x, y: data.y });
+    io.in(socketRoom).emit('emit add object', data);
   });
 
 
