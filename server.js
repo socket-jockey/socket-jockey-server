@@ -33,7 +33,7 @@ io.on('connection', socket => {
     const numOfParticipants = Array.from(namespace.adapter.rooms.get(room)).length;
     if(numOfParticipants >= 3)num++;
 
-    socket.emit('set room', room);
+    socket.emit('set room', room, numOfParticipants);
     // console.log(io.of('/').in(room))
     console.log(namespace.adapter.rooms);
   });
