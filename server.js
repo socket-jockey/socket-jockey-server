@@ -28,31 +28,31 @@ io.on('connection', socket => {
 
   socket.on('collab', () => {
     const room = 'room' + num;
-    socket.join(room);
-    const numOfParticipants = Array.from(namespace.adapter.rooms.get(room)).length;
-    if(numOfParticipants >= 3)num++;
 
+    socket.join(room);
+
+    const numOfParticipants = Array.from(namespace.adapter.rooms.get(room)).length;
+
+    if(numOfParticipants >= 3)num++;
     socket.emit('set room', room);
+
     io.in(room).emit('num participants', numOfParticipants);
-    // console.log(io.of('/').in(room))
-    console.log(namespace.adapter.rooms);
   });
+
+
   socket.on('begin', (room) => {
+    num++;
     io.in(room).emit('close modal');
   });
 
   socket.on('client chat', (input, socketRoom) => {
-    console.log('room', socketRoom);
-    console.log(input);
+
     io.in(socketRoom).emit('server chat', input);
   });
 
   socket.on('add object', (socketRoom, data) => {
-    console.log(socketRoom, data);
     io.in(socketRoom).emit('emit add object', data);
   });
-
-
 });
 
 instrument(io, {
