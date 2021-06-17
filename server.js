@@ -79,9 +79,14 @@ io.on('connection', (socket) => {
     io.in(roomId).emit('state from server', users);
   });
 
-  socket.on('begin', (roomId) => {
-    io.in(roomId).emit('close modal');
-    roomNumber++;
+  socket.on('transmit mouse', (room, data) => {
+    console.log('working?!!', room, data);
+    io.in(room).emit('mouse response', data);
+  });
+
+  socket.on('begin', (room) => {
+    num++;
+    io.in(room).emit('close modal');
   });
 
   //   const numOfParticipants = Array.from(
