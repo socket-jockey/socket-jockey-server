@@ -30,6 +30,7 @@ io.on('connection', (socket) => {
 
   socket.on('collab', () => {
     const room = 'room' + num;
+
     socket.join(room);
     rooms[room] = {};
 
@@ -52,19 +53,22 @@ io.on('connection', (socket) => {
     // io.in(room).emit('participant color', (color) => {});
     // console.log(io.of('/').in(room))
   });
+
   socket.on('begin', (room) => {
+    num++;
     io.in(room).emit('close modal');
   });
 
   socket.on('client chat', (input, socketRoom) => {
-    console.log('room', socketRoom);
-    console.log(input);
     io.in(socketRoom).emit('server chat', input);
   });
 
   socket.on('add object', (socketRoom, data) => {
-    console.log(socketRoom, data);
     io.in(socketRoom).emit('emit add object', data);
+  });
+
+  socket.on('undo', (socketRoom) => {
+    io.in(socketRoom).emit('undo last');
   });
 });
 
