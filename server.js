@@ -23,8 +23,8 @@ app.use(express.json());
 
 // const rooms = io.sockets.adapter.rooms
 let roomNumber = 10001;
-let rooms = {};
-let room = '';
+const rooms = {};
+let roomId = '';
 
 io.on('connection', (socket) => {
   console.log(`new connection id ${socket.id}`);
@@ -85,7 +85,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('begin', (room) => {
-    num++;
+    roomNumber++;
     io.in(room).emit('close modal');
   });
 
