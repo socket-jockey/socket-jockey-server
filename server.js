@@ -23,8 +23,8 @@ app.use(express.json());
 
 // const rooms = io.sockets.adapter.rooms
 let roomNumber = 10001;
-let rooms = {};
-let room = '';
+const rooms = {};
+let roomId = '';
 
 io.on('connection', (socket) => {
   console.log(`new connection id ${socket.id}`);
@@ -32,11 +32,8 @@ io.on('connection', (socket) => {
 
   // triggered by 'enter room' event on front end
   socket.on('set roomId & join', ({ userId, customRoomId }) => {
-    // max participants supported per room
-    const maxParticipants = 3;
     // if custom room is provided && spots are available, assign to private room or add new private room; if none is provided assign to default room
     roomId = customRoomId ? customRoomId : 'room' + roomNumber;
-    console.log('custom room id', roomId);
 
     socket.join(roomId);
 
@@ -44,12 +41,12 @@ io.on('connection', (socket) => {
       namespace.adapter.rooms.get(roomId)
     ).length;
 
-    if (!customRoomId && numOfParticipants >= 3) {
+    if(!customRoomId && numOfParticipants >= 3) {
       roomNumber++;
     }
 
     // initialize a room in state object or add to existing room
-    if (!rooms[roomId]) rooms[roomId] = { [userId]: '' };
+    if(!rooms[roomId]) rooms[roomId] = { [userId]: '' };
     else
       rooms[roomId] = {
         ...rooms[roomId],
@@ -85,7 +82,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('begin', (room) => {
-    num++;
+    roomNumber++;
     io.in(room).emit('close modal');
   });
 
@@ -106,7 +103,7 @@ io.on('connection', (socket) => {
     io.in(socketRoom).emit('emit add object', data);
   });
 
-  socket.on('undo', (socketRoom) => {
+  socket.on('undo', (socketRoom) => {  
     io.in(socketRoom).emit('undo last');
   });
 });
