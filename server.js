@@ -21,7 +21,6 @@ const io = require('socket.io')(http, {
 const namespace = io.of('/');
 app.use(express.json());
 
-// const rooms = io.sockets.adapter.rooms
 let num = 10001;
 let rooms = {};
 let room = '';
@@ -30,6 +29,7 @@ io.on('connection', (socket) => {
   console.log(`new connection id ${socket.id}`);
   io.to(socket.id).emit('user id', socket.id);
 
+  
 
   socket.on('collab', (customRoom) => {
     room = customRoom ? customRoom : 'room' + num;
@@ -55,6 +55,12 @@ io.on('connection', (socket) => {
       ...user,
     };
     io.in(room).emit('state from server', rooms[room]);
+  });
+
+  socket.on('transmit mouse', (room, data) =>{
+    console.log('working?!!', room, data)
+    io.in(room).emit('mouse response', data);
+    
   });
 
   socket.on('begin', (room) => {
