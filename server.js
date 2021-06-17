@@ -2,18 +2,20 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 8000;
 const { instrument } = require('@socket.io/admin-ui');
-//testing 
-app.use(require('cors')({
-  origin: true,
-  credentials: true,
-}));
+//testing
+app.use(
+  require('cors')({
+    origin: true,
+    credentials: true,
+  })
+);
 
 const http = require('http').createServer(app);
 
 const io = require('socket.io')(http, {
   cors: {
-    origin: true
-  }
+    origin: true,
+  },
 });
 
 const namespace = io.of('/');
@@ -21,33 +23,45 @@ app.use(express.json());
 
 // const rooms = io.sockets.adapter.rooms
 let num = 10001;
+const rooms = {};
+let room = '';
 
-io.on('connection', socket => {
+io.on('connection', (socket) => {
   console.log(`new connection id ${socket.id}`);
-
+  io.to(socket.id).emit('user id', socket.id);
 
   socket.on('collab', () => {
-    const room = 'room' + num;
+    room = 'room' + num;
+    if(!rooms[room]) rooms[room] = {};
 
     socket.join(room);
 
-    const numOfParticipants = Array.from(namespace.adapter.rooms.get(room)).length;
+    io.in(room).emit('set room', { room, users: rooms[room] });
 
-    if(numOfParticipants >= 3)num++;
-    socket.emit('set room', room);
+    const numOfParticipants = Array.from(
+      namespace.adapter.rooms.get(room)
+    ).length;
+
+    if(numOfParticipants >= 3) num++;
 
     io.in(room).emit('num participants', numOfParticipants);
   });
 
+  socket.on('set color', ({ room, user }) => {
+    rooms[room] = {
+      ...rooms[room],
+      ...user,
+    };
+    io.in(room).emit('state from server', rooms[room]);
+  });
 
   socket.on('begin', (room) => {
     num++;
     io.in(room).emit('close modal');
   });
 
-  socket.on('client chat', (input, socketRoom) => {
-
-    io.in(socketRoom).emit('server chat', input);
+  socket.on('client chat', ({ input, color }, socketRoom) => {
+    io.in(socketRoom).emit('server chat', { input, color });
   });
 
   socket.on('add object', (socketRoom, data) => {
@@ -60,7 +74,7 @@ io.on('connection', socket => {
 });
 
 instrument(io, {
-  auth: false
+  auth: false,
 });
 
 http.listen(PORT, () => console.log(`server spinning on port ${PORT}`));
