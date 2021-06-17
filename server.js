@@ -24,22 +24,19 @@ app.use(express.json());
 // const rooms = io.sockets.adapter.rooms
 let num = 10001;
 let rooms = {};
+let room = '';
 
 io.on('connection', (socket) => {
   console.log(`new connection id ${socket.id}`);
+  io.to(socket.id).emit('user id', socket.id);
 
   socket.on('collab', () => {
-    const room = 'room' + num;
+    room = 'room' + num;
+    if (!rooms[room]) rooms[room] = {};
 
     socket.join(room);
-    rooms[room] = {};
 
-    io.in(room).emit('set room', { room, id: socket.id });
-
-    socket.on('set color', (color) => {
-      rooms[room][socket.id] = color;
-      io.in(room).emit('state from server', rooms[room]);
-    });
+    io.in(room).emit('set room', { room, users: rooms[room] });
 
     const numOfParticipants = Array.from(
       namespace.adapter.rooms.get(room)
@@ -48,10 +45,14 @@ io.on('connection', (socket) => {
     if (numOfParticipants >= 3) num++;
 
     io.in(room).emit('num participants', numOfParticipants);
-    // io.in(room).emit('participants', participants);
+  });
 
-    // io.in(room).emit('participant color', (color) => {});
-    // console.log(io.of('/').in(room))
+  socket.on('set color', ({ room, user }) => {
+    rooms[room] = {
+      ...rooms[room],
+      ...user,
+    };
+    io.in(room).emit('state from server', rooms[room]);
   });
 
   socket.on('begin', (room) => {
@@ -59,8 +60,8 @@ io.on('connection', (socket) => {
     io.in(room).emit('close modal');
   });
 
-  socket.on('client chat', (input, socketRoom) => {
-    io.in(socketRoom).emit('server chat', input);
+  socket.on('client chat', ({ input, color }, socketRoom) => {
+    io.in(socketRoom).emit('server chat', { input, color });
   });
 
   socket.on('add object', (socketRoom, data) => {
