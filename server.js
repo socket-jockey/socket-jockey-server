@@ -53,6 +53,10 @@ io.on('connection', socket => {
   socket.on('add object', (socketRoom, data) => {
     io.in(socketRoom).emit('emit add object', data);
   });
+
+  socket.on('undo', (socketRoom) => {
+    io.in(socketRoom).emit('undo last');
+  });
 });
 
 instrument(io, {
