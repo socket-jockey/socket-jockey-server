@@ -30,8 +30,10 @@ io.on('connection', (socket) => {
   console.log(`new connection id ${socket.id}`);
   io.to(socket.id).emit('user id', socket.id);
 
-  socket.on('collab', () => {
-    room = 'room' + num;
+
+  socket.on('collab', (customRoom) => {
+    room = customRoom ? customRoom : 'room' + num;
+
     if (!rooms[room]) rooms[room] = {};
 
     socket.join(room);
