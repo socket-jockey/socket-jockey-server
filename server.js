@@ -2,18 +2,20 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 8000;
 const { instrument } = require('@socket.io/admin-ui');
-//testing 
-app.use(require('cors')({
-  origin: true,
-  credentials: true,
-}));
+//testing
+app.use(
+  require('cors')({
+    origin: true,
+    credentials: true,
+  })
+);
 
 const http = require('http').createServer(app);
 
 const io = require('socket.io')(http, {
   cors: {
-    origin: true
-  }
+    origin: true,
+  },
 });
 
 const namespace = io.of('/');
@@ -21,21 +23,34 @@ app.use(express.json());
 
 // const rooms = io.sockets.adapter.rooms
 let num = 10001;
+let rooms = {};
 
-io.on('connection', socket => {
+io.on('connection', (socket) => {
   console.log(`new connection id ${socket.id}`);
-
 
   socket.on('collab', () => {
     const room = 'room' + num;
     socket.join(room);
-    const numOfParticipants = Array.from(namespace.adapter.rooms.get(room)).length;
-    if(numOfParticipants >= 3)num++;
+    rooms[room] = {};
 
-    socket.emit('set room', room);
+    io.in(room).emit('set room', { room, id: socket.id });
+
+    socket.on('set color', (color) => {
+      rooms[room][socket.id] = color;
+      io.in(room).emit('state from server', rooms[room]);
+    });
+
+    const numOfParticipants = Array.from(
+      namespace.adapter.rooms.get(room)
+    ).length;
+
+    if (numOfParticipants >= 3) num++;
+
     io.in(room).emit('num participants', numOfParticipants);
+    // io.in(room).emit('participants', participants);
+
+    // io.in(room).emit('participant color', (color) => {});
     // console.log(io.of('/').in(room))
-    console.log(namespace.adapter.rooms);
   });
   socket.on('begin', (room) => {
     io.in(room).emit('close modal');
@@ -51,12 +66,10 @@ io.on('connection', socket => {
     console.log(socketRoom, data);
     io.in(socketRoom).emit('emit add object', data);
   });
-
-
 });
 
 instrument(io, {
-  auth: false
+  auth: false,
 });
 
 http.listen(PORT, () => console.log(`server spinning on port ${PORT}`));
