@@ -21,52 +21,82 @@ const io = require('socket.io')(http, {
 const namespace = io.of('/');
 app.use(express.json());
 
-let num = 10001;
+// const rooms = io.sockets.adapter.rooms
+let roomNumber = 10001;
 let rooms = {};
 let room = '';
 
 io.on('connection', (socket) => {
   console.log(`new connection id ${socket.id}`);
-  io.to(socket.id).emit('user id', socket.id);
+  io.to(socket.id).emit('set userId', socket.id);
 
-  
+  // triggered by 'enter room' event on front end
+  socket.on('set roomId & join', ({ userId, customRoomId }) => {
+    // max participants supported per room
+    const maxParticipants = 3;
+    // if custom room is provided && spots are available, assign to private room or add new private room; if none is provided assign to default room
+    roomId = customRoomId ? customRoomId : 'room' + roomNumber;
+    console.log('custom room id', roomId);
 
-  socket.on('collab', (customRoom) => {
-    room = customRoom ? customRoom : 'room' + num;
-
-    if (!rooms[room]) rooms[room] = {};
-
-    socket.join(room);
-
-    io.in(room).emit('set room', { room, users: rooms[room] });
+    socket.join(roomId);
 
     const numOfParticipants = Array.from(
-      namespace.adapter.rooms.get(room)
+      namespace.adapter.rooms.get(roomId)
     ).length;
 
-    if (numOfParticipants >= 3) num++;
+    if (!customRoomId && numOfParticipants >= 3) {
+      roomNumber++;
+    }
 
-    io.in(room).emit('num participants', numOfParticipants);
+    // initialize a room in state object or add to existing room
+    if (!rooms[roomId]) rooms[roomId] = { [userId]: '' };
+    else
+      rooms[roomId] = {
+        ...rooms[roomId],
+        [userId]: '',
+      };
+
+    console.log('from set roomId', rooms);
+
+    // echo room ID back to users upon connection
+    io.in(roomId).emit('set roomId', roomId);
+
+    // echo user ID back to user upon connection
+    const users = rooms[roomId];
+    console.log('from join room', users);
+
+    io.in(roomId).emit('state from server', users);
   });
 
-  socket.on('set color', ({ room, user }) => {
-    rooms[room] = {
-      ...rooms[room],
+  socket.on('set color', ({ roomId, user }) => {
+    console.log('set color', roomId, user);
+    rooms[roomId] = {
+      ...rooms[roomId],
       ...user,
     };
-    io.in(room).emit('state from server', rooms[room]);
+
+    const users = rooms[roomId];
+    io.in(roomId).emit('state from server', users);
   });
 
-  socket.on('transmit mouse', (room, data) =>{
-    console.log('working?!!', room, data)
+  socket.on('transmit mouse', (room, data) => {
+    console.log('working?!!', room, data);
     io.in(room).emit('mouse response', data);
-    
   });
 
   socket.on('begin', (room) => {
     num++;
     io.in(room).emit('close modal');
   });
+
+  //   const numOfParticipants = Array.from(
+  //     namespace.adapter.rooms.get(room)
+  //   ).length;
+
+  //   if (numOfParticipants >= maxParticipants) num++;
+
+  //   io.in(room).emit('num participants', numOfParticipants);
+  // });
 
   socket.on('client chat', ({ input, color }, socketRoom) => {
     io.in(socketRoom).emit('server chat', { input, color });
