@@ -86,6 +86,10 @@ io.on('connection', (socket) => {
     io.in(room).emit('close modal');
   });
 
+  socket.on('clear all', room => {
+    io.in(room).emit('clear all server');
+  });
+
   //   const numOfParticipants = Array.from(
   //     namespace.adapter.rooms.get(room)
   //   ).length;
