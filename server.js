@@ -53,20 +53,17 @@ io.on('connection', (socket) => {
         [userId]: '',
       };
 
-    console.log('from set roomId', rooms);
 
     // echo room ID back to users upon connection
     io.in(roomId).emit('set roomId', roomId);
 
     // echo user ID back to user upon connection
     const users = rooms[roomId];
-    console.log('from join room', users);
 
     io.in(roomId).emit('state from server', users);
   });
 
   socket.on('set color', ({ roomId, user }) => {
-    console.log('set color', roomId, user);
     rooms[roomId] = {
       ...rooms[roomId],
       ...user,
@@ -77,7 +74,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('transmit mouse', (room, data) => {
-    console.log('working?!!', room, data);
     io.in(room).emit('mouse response', data);
   });
 
@@ -89,15 +85,6 @@ io.on('connection', (socket) => {
   socket.on('clear all', room => {
     io.in(room).emit('clear all server');
   });
-
-  //   const numOfParticipants = Array.from(
-  //     namespace.adapter.rooms.get(room)
-  //   ).length;
-
-  //   if (numOfParticipants >= maxParticipants) num++;
-
-  //   io.in(room).emit('num participants', numOfParticipants);
-  // });
 
   socket.on('client chat', ({ input, color }, socketRoom) => {
     io.in(socketRoom).emit('server chat', { input, color });
